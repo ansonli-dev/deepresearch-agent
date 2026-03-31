@@ -1,0 +1,6 @@
+[project]
+name = "deepresearch-agent"
+version = "0.1.0"
+description = "Autonomous research agent built with LangGraph"
+requires-python = ">=3.12"
+dependencies = []
