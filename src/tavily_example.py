@@ -1,13 +1,77 @@
 """Tavily search → LLM summary pipeline.
 
-This script demonstrates the search-to-answer pipeline:
-1. Query Tavily for web results (cleaned text, not raw HTML)
-2. Format results into a text block for the LLM
-3. Ask DeepSeek to summarize with citations
+This script demonstrates the search-to-answer pipeline (RAG prototype):
+
+    Step 1: Tavily search      — query the web, get structured results
+    Step 2: Format results     — convert dicts into numbered text for the LLM
+    Step 3: LLM summarization  — DeepSeek writes a cited summary
+
+Data flow for query "LangGraph stateful agents":
+
+┌─ Step 1: search() ─────────────────────────────────────────────────────┐
+│                                                                         │
+│  Your code  ──HTTP POST──▶  Tavily API  ──▶  returns 5 results         │
+│                                                                         │
+│  Each result is a dict:                                                 │
+│  {                                                                      │
+│    "title":   "LangGraph: Building Stateful AI Agents",                 │
+│    "url":     "https://medium.com/@kevinnjagi83/...",                   │
+│    "content": "LangGraph is a Python library designed to build...",     │
+│    "score":   0.95                                                      │
+│  }                                                                      │
+│                                                                         │
+│  Tavily vs Google:                                                      │
+│  - Google returns HTML page links — you must scrape content yourself    │
+│  - Tavily returns cleaned plain text, optimized for LLM context windows │
+└─────────────────────────────────────────────────────────────────────────┘
+                    │
+                    ▼  list[dict] — 5 search results
+                    │
+┌─ Step 2: format_results_for_llm() ─────────────────────────────────────┐
+│                                                                         │
+│  Converts the dicts into numbered text:                                 │
+│                                                                         │
+│  [1] LangGraph: Building Stateful AI Agents                             │
+│      URL: https://medium.com/...                                        │
+│      LangGraph is a Python library designed to build...                 │
+│                                                                         │
+│  [2] LangGraph Agents: Build Stateful, Controllable AI Workflows        │
+│      URL: https://www.leanware.co/...                                   │
+│      LangGraph agents are stateful AI workflows...                      │
+│                                                                         │
+│  Why numbered? So the LLM can cite "[1]" "[2]" in its summary.         │
+│  Why truncate to 400 chars? To stay within the LLM context window.     │
+└─────────────────────────────────────────────────────────────────────────┘
+                    │
+                    ▼  str — formatted text block
+                    │
+┌─ Step 3: summarize_with_llm() ─────────────────────────────────────────┐
+│                                                                         │
+│  Prompt sent to DeepSeek:                                               │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │ "Based on the following search results for the query            │    │
+│  │  'LangGraph stateful agents', write a 2-3 sentence summary     │    │
+│  │  and cite sources by their [number].                            │    │
+│  │                                                                 │    │
+│  │  [1] LangGraph: Building Stateful AI Agents                     │    │
+│  │      URL: https://medium.com/...                                │    │
+│  │      LangGraph is a Python library...                           │    │
+│  │  [2] ..."                                                       │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+│  DeepSeek returns:                                                      │
+│  "LangGraph is a Python library designed for building stateful,         │
+│   multi-agent AI workflows using graph-based control logic [1][2].      │
+│   Created by the LangChain team, it enables developers to construct     │
+│   complex applications like chatbots [1][3]."                           │
+│                                                                         │
+│   ↑ [1][2][3] = citation numbers matching the search results above     │
+└─────────────────────────────────────────────────────────────────────────┘
 
 This is the manual prototype of the agent's `web_search` tool (M1).
 The pattern (search → format → summarize) is the foundation of RAG
-(Retrieval-Augmented Generation).
+(Retrieval-Augmented Generation) — retrieve real info first, then let the
+LLM answer based on evidence instead of guessing from memory.
 """
 
 import argparse
