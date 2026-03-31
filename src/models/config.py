@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     langsmith_api_key: str = ""
     langsmith_project: str = "deepresearch-agent"
     langchain_tracing_v2: bool = False
+    langchain_endpoint: str = "https://api.smith.langchain.com"
 
     # Active model profile
     model_profile: str = "default"

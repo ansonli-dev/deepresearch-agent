@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Autonomous research agent built with LangGraph"
 requires-python = ">=3.12"
 dependencies = [
+    "langchain-core>=1.2.23",
+    "langchain-openai>=1.1.12",
+    "langsmith>=0.7.23",
     "openai>=2.30.0",
     "pydantic-settings>=2.13.1",
     "pyyaml>=6.0.3",
