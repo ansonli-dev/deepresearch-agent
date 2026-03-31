@@ -48,6 +48,51 @@ def calculate(expression: str) -> float:
 
 # --- Step 3: Agentic loop ---
 # Send prompt → LLM returns tool call → execute tool → send result back → get final answer
+#
+# Example conversation for "What is (123 * 456) + 789?":
+#
+# ┌─ Round 1 ────────────────────────────────────────────────────────────┐
+# │ → messages sent to LLM:                                             │
+# │   [user] "What is (123 * 456) + 789?"                               │
+# │                                                                      │
+# │ ← LLM response:                                                     │
+# │   finish_reason: "tool_calls"                                        │
+# │   tool_calls: [{name: "calculate", args: {"expression": "123*456"}}] │
+# │                                                                      │
+# │ Our code executes: calculate("123 * 456") → 56088.0                 │
+# │                                                                      │
+# │ messages updated to:                                                 │
+# │   [user]      "What is (123 * 456) + 789?"                          │
+# │   [assistant]  tool_call: calculate("123 * 456")                     │
+# │   [tool]       "56088.0"                                             │
+# └──────────────────────────────────────────────────────────────────────┘
+#
+# ┌─ Round 2 ────────────────────────────────────────────────────────────┐
+# │ → messages sent to LLM: (all 3 above)                               │
+# │                                                                      │
+# │ ← LLM response:                                                     │
+# │   finish_reason: "tool_calls"                                        │
+# │   tool_calls: [{name: "calculate", args: {"expression":"56088+789"}}]│
+# │                                                                      │
+# │ Our code executes: calculate("56088 + 789") → 56877.0               │
+# │                                                                      │
+# │ messages updated to:                                                 │
+# │   [user]       "What is (123 * 456) + 789?"                         │
+# │   [assistant]  tool_call: calculate("123 * 456")                     │
+# │   [tool]       "56088.0"                                             │
+# │   [assistant]  tool_call: calculate("56088 + 789")                   │
+# │   [tool]       "56877.0"                                             │
+# └──────────────────────────────────────────────────────────────────────┘
+#
+# ┌─ Round 3 ────────────────────────────────────────────────────────────┐
+# │ → messages sent to LLM: (all 5 above)                               │
+# │                                                                      │
+# │ ← LLM response:                                                     │
+# │   finish_reason: "stop"                                              │
+# │   content: "The result of (123 × 456) + 789 is 56,877."             │
+# │                                                                      │
+# │ → Return to user                                                     │
+# └──────────────────────────────────────────────────────────────────────┘
 
 
 def run_with_tools(user_question: str, api_key: str, max_rounds: int = 5) -> str:
