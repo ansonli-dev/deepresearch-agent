@@ -1,0 +1,11 @@
+models:
+  default:
+    provider: deepseek
+    model_id: deepseek-chat
+    temperature: 0.7
+    max_tokens: 4096
+  premium:
+    provider: deepseek
+    model_id: deepseek-reasoner
+    temperature: 0.5
+    max_tokens: 8192

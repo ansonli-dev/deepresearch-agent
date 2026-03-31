@@ -3,7 +3,10 @@ name = "deepresearch-agent"
 version = "0.1.0"
 description = "Autonomous research agent built with LangGraph"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pydantic-settings>=2.13.1",
+    "pyyaml>=6.0.3",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
